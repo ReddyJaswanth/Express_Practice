@@ -72,8 +72,8 @@ app.post('/register', async (request, response) => {
 // login API
 
 app.post('/login', async (request, response) => {
-  const {userName, password} = request.body
-  const selectUserQuery = `select * from user where username='${userName}'`
+  const {username, password} = request.body
+  const selectUserQuery = `select * from user where username='${username}'`
   const dbUser = await db.get(selectUserQuery)
   if (dbUser === undefined) {
     //   unregistered User
@@ -94,8 +94,8 @@ app.post('/login', async (request, response) => {
 
 // API 3
 app.put('/change-password', async (request, response) => {
-  const {userName, oldPassword, newPassword} = request.body
-  const selectUserQuery = `select * from user where username='${userName}'`
+  const {username, oldPassword, newPassword} = request.body
+  const selectUserQuery = `select * from user where username='${username}'`
   const dbUser = await db.get(selectUserQuery)
 
   if (dbUser === undefined) {
@@ -111,7 +111,7 @@ app.put('/change-password', async (request, response) => {
       } else {
         const hashedPassword = await bcrypt.hash(newPassword, 10)
         const updateQuery = `
-    update user set password='${hashedPassword}' where username = '${userName}'`
+    update user set password='${hashedPassword}' where username = '${username}'`
 
         await db.run(updateQuery)
         response.status(200)
