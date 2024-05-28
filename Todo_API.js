@@ -31,37 +31,25 @@ initializeDbAndServer()
 // API 1
 // scenario 1
 app.get('/todos/', async (request, response) => {
-  const {status} = request.query
+  const {search_q = '', priority, status} = request.query
 
-  const todoQuery = `select * from todo where status = '${status}'`
-  const dbResponse = await db.all(todoQuery)
-  response.send(dbResponse)
-})
+  switch (true) {
+    case hasPriorityAndStatusProperty(request.query):
+      getTodoQuery = `select * from todo where todo like '%${search_q}%' and status = '${status}' and priority = '${priority}'`
+      break
+    case hasPriorityProperty(request.query):
+      getTodoQuery = `select * from todo where todo like '%${search_q}%' and priority = '${priority}'`
+      break
+    case hasStatusProperty(request.query):
+      getTodoQuery = `select * from todo where todo like '%${search_q}%' and status = '${status}'`
+      break
 
-// scenario 2
-app.get('/todos/', async (request, response) => {
-  const {priority} = request.query
+    default:
+      getTodoQuery = `select * from todo where todo like '%${search_q}%'`
+      break
+  }
 
-  const todoQuery = `select * from todo where priority = '${priority}'`
-  const dbResponse = await db.all(todoQuery)
-  response.send(dbResponse)
-})
-
-// scenario 3
-app.get('/todos/', async (request, response) => {
-  const {priority, status} = request.query
-
-  const todoQuery = `select * from todo where priority = '${priority}' and status = '${status}'`
-  const dbResponse = await db.all(todoQuery)
-  response.send(dbResponse)
-})
-
-// scenario 4
-app.get('/todos/', async (request, response) => {
-  const {search_q = ''} = request.query
-
-  const todoQuery = `select * from todo where todo LIKE '%${search_q}%'`
-  const dbResponse = await db.all(todoQuery)
+  const dbResponse = await db.all(getTodoQuery)
   response.send(dbResponse)
 })
 
@@ -87,37 +75,28 @@ app.post('/todos/', async (request, response) => {
 })
 
 // API 4
-// scenario 1
 app.put('/todos/:todoId/', async (request, response) => {
   const {todoId} = request.params
-  const {status} = request.body
+  const {priority, status, todo} = request.body
+  let updateCoulmn
+  switch (true) {
+    case status !== undefined:
+      updateCoulmn = 'Status'
+      updateQuery = `update todo set status = '${status}' where id=${todoId}`
+      break
+    case priority !== undefined:
+      updateCoulmn = 'Priority'
+      updateQuery = `update todo set priority = '${priority}' where id=${todoId}`
+      break
 
-  const query = `update todo set status='${status}' where id=${todoId}`
+    default:
+      updateCoulmn = 'Todo'
+      updateQuery = `update todo set todo = '${todo}' where id=${todoId}`
+      break
+  }
 
-  await db.run(query)
-  response.send('Status Updated')
-})
-
-// scenario 2
-app.put('/todos/:todoId/', async (request, response) => {
-  const {todoId} = request.params
-  const {priority} = request.body
-
-  const query = `update todo set priority='${priority}' where id=${todoId}`
-
-  await db.run(query)
-  response.send('Priority Updated')
-})
-
-// scenario 3
-app.put('/todos/:todoId/', async (request, response) => {
-  const {todoId} = request.params
-  const {todo} = request.body
-
-  const query = `update todo set todo='${todo}' where id=${todoId}`
-
-  await db.run(query)
-  response.send('Todo Updated')
+  await db.all(updateQuery)
+  response.send(`${updateCoulmn} Updated`)
 })
 
 // API 5
